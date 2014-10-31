@@ -1,0 +1,20 @@
+* Optimal Service Rate in M/M/1 Queue
+
+
+** Project Summary
+
+** Issues List / Roadmap
+
+   - [ ] Formulate DP and review with Yong-Pin - [[https://github.com/stephenjbarr/yp-mm1-mu-dpsolver/issues/1][Issue 1]]
+   - [ ] Implement core solver in Haskell - [[https://github.com/stephenjbarr/yp-mm1-mu-dpsolver/issues/2][Issue 2]]
+   - [ ] Independent implementation in Matlab to verify results - [[https://github.com/stephenjbarr/yp-mm1-mu-dpsolver/issues/3][Issue 3]]
+   - [ ] Create charts and visualizations - [[https://github.com/stephenjbarr/yp-mm1-mu-dpsolver/issues/4][Issue 4]]
+   - [ ] Create interface to easily change functional forms of c(mu) and h(L) - [[https://github.com/stephenjbarr/yp-mm1-mu-dpsolver/issues/5][Issue 5]]
+
+** Problem Formulation
+
+** Matlab Implementation
+
+** Haskell Implementation
+
+
