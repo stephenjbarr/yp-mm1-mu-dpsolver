@@ -1,7 +1,85 @@
-* Optimal Service Rate in M/M/1 Queue
+#+TITLE: Optimal Service Rates in M/M/1 Queue
+#+AUTHOR: Stephen J. Barr
+#+AUTHOR: Yong-Pin Zhou
+#+LATEX_CLASS: myfdparticle
+#+LATEX_HEADER: \bibliographystyle{plainnat}
 
 
-** Project Summary
+* Optimal Service Rates in M/M/1 Queue
+
+
+** Project Formulation
+   CLOCK: [2014-11-20 Thu 02:03]
+   CLOCK: [2014-11-19 Wed 23:02]--[2014-11-20 Thu 02:02] =>  3:00
+   CLOCK: [2014-11-19 Wed 15:39]--[2014-11-19 Wed 17:56] =>  2:17
+   CLOCK: [2014-11-19 Wed 14:49]--[2014-11-19 Wed 15:06] =>  0:17
+   :PROPERTIES:
+   :EXPORT_FILE_NAME: extra_doc/problem-formulation/problem-formulation.tex
+   :EXPORT_OPTIONS: toc:nil
+   :ID:       95958513-df5a-4892-85e6-c34bebdf2700
+   :END:
+
+   Consider an \( M/M/1 \) queue with service rate \( \lambda \).
+   Higher service rates are most often preferred to lower, and in real life increasing the service rate comes at cost \( c(\mu) \).
+   The question is to find the \( \mu \) which balances the cost of service and the cost of waiting in the queue, called \( h(L(\lambda)) \), where \( L(\lambda) \) represents the average queue length.
+   For simplicity, we can call this \( h(q) \) where \( q \in \{0,1,...\} \), the number of customers in the queue.
+
+   We would like to experiment with functional forms of \( c(\mu) \) and \( h(q) \).
+   
+   Note that we are using cite:sennott_stochastic_1998 as a reference.
+
+
+*** Notes for the formulation:   
+   1. State: \( S \)
+   2. cite:sennott_stochastic_1998 lists action set as \( A = \{a_{1},...,a_{K}\} \), where the action is the service rate. We want to represent the service rate as \( \mu \in [0, \bar{\mu}] \), which we will discretize as \( \mu \in [\mu_{0}, \mu_{1},...,\mu_{K}] \).
+   3. Cost rates:
+      1. \( g(0) = 0 \)
+      2. \( g(i,a) = c(a) + h(i) \).
+      
+      
+
+
+*** Algorithm / Pseudocode
+    1. Choose \( N \), division
+    2. Set:
+       1. \( W_{\text{prev}} = 1\)
+       2. \( \tau = 1/ (2(\lambda + \bar{\mu})) \)
+       3. \( \text{arr} = \lambda \tau \)
+       4. \( V_{\text{prev}} = 1  \)
+    3. While \( \{\delta > \epsilon\} \land \{ I < \text{MaxIter}\} \)
+       1. 
+
+
+
+
+*** Terminology of cite:sennott_stochastic_1998
+    1. MDC - Markov Decision Chain
+    2. State \( i \in S \)
+    3. Action \( a \in A_{i} \)
+    4. Cost of action \( C(i,a) \geq 0 \)
+    5. Reward of action \( R(i,a) \geq 0\)
+    6. Transition probability \( P_{ij}(a) \), prob. of going from state \( i \) to \( j \) given action \( a \) while in state \( i \).
+    7. Continuous Time Markov Decision Chain (CTMDC), denoted \( \Psi \)
+    8. \( G(i,a) \) instantaneous cost of chosing \( a \) in state \( i \)
+    9. \( g(i,a) \) cost rate in effect until the next transition
+    10. \( v(i,a) \) the exponential parameter describing time until next transition (from state \( i \), chosing action \( a \))
+
+
+*** Average Cost Optimization of Continous Time Process (cite:sennott_stochastic_1998, Chapter 10)
+**** Notes
+     1. In this chapter, the state space is countable.
+     2. Assume *Continuous Time Bounded*
+     3. Assume \( P_{ii}(a) \equiv 0 \), meaning all transitions are real.
+     4. State \( i \geq 1 \) means
+	1. A new arrival happened and state was \( q-1 \)
+	2. A service just completed, and state was \( q+1 \)
+     5. If a new 
+
+
+
+   bibliography:~/Dropbox/bibliography/sjbmainbibtex.bib   
+
+
 
 ** Issues List / Roadmap
 
@@ -18,3 +96,5 @@
 ** Haskell Implementation
 
 
+
+  bibliography:~/Dropbox/bibliography/sjbmainbibtex.bib   
