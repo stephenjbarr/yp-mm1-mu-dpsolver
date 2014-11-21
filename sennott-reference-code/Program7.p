@@ -26,7 +26,7 @@ program AverageCostRateControlContinuousTimeQueue (input, output);
 
 const
 
-N = 48;
+N = 84;
 
 NUMACT = 3;
 
@@ -204,6 +204,10 @@ begin
 
       end;
 
+
+
+      { choose the action with the smallest expected cost }
+
       Temp := CostAct[1] + TAct[1] * Fun[i - 1] + (1 - arr - TAct[1]) * Fun[i];
 
       TempAct := 1;
@@ -230,7 +234,7 @@ begin
 
       OptAct[i] := TempAct;
 
-   end;
+   end; { end for }
 
 end;
 
