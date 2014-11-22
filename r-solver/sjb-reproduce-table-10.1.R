@@ -5,9 +5,13 @@
 ##
 
 
+source("sjb-r-solver-general.R");
+library(parallel)  ## for mclapply
 
+########################################
+## Load parameterization data
 
-lambdas <- c(3,2,2,2,5,5,10,20)
+lambdas <- c(3,2,2,2,5,5,10,20);
 
 svcrates <- matrix(
     data = c(
@@ -20,7 +24,7 @@ svcrates <- matrix(
         10.2,10.6,12.0,
         24.0,27.0,30.0),
     ncol = 3,
-    byrow = TRUE)
+    byrow = TRUE);
 
 costs <- t(matrix(
     data = c(
@@ -28,7 +32,7 @@ costs <- t(matrix(
         13.0, 50.0, 50.0, 50.0, 10.0, 10.0, 10.0, 1.5, 
         21.0,  500.0, 150.0, 100, 100, 25, 25, 5), 
     nrow = 3,
-    byrow = TRUE))
+    byrow = TRUE));
     
 
 problem_params_base <- list(
@@ -39,12 +43,18 @@ problem_params_base <- list(
     epsilon            = 0.0001,
     MAXITER            = 20000,
     output_base        = "tab_scenario10-1"
-    )
+    );
 
 
-pp_list = list()
-ac_list = list()
-N_scenario = length(lambdas)
+
+########################################
+## Process the data into lists of params and
+## ac objects
+
+pp_list = list();
+ac_list = list();
+N_scenario = length(lambdas);
+
 
 for (i in 1:N_scenario) {
 

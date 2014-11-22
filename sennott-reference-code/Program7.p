@@ -182,6 +182,9 @@ Temp, TempNew, New: double;
 
 begin
 
+   { writeln('I: ', I); }
+   { writeln(Fun[0]); }
+   { writeln(WFun[0], WFun[1]); }
    WFun[0] := (1 - arr) * Fun[0] + arr * Fun[1];
 
    for i := 1 to N do
@@ -230,6 +233,7 @@ begin
 
       end;
 
+      { for i = 1, this is assigning to the second element of the array }
       WFun[i] := H * i + arr * New + Temp;
 
       OptAct[i] := TempAct;
