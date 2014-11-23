@@ -2,7 +2,7 @@
 ##
 ## Experiment with variable holding cost rates
 
-## Load the code for 
+## Load the code for the solver
 source("sjb-r-solver-general.R");
 
 ## Make a few different types of holding cost examples
@@ -38,6 +38,11 @@ ac_map = ac_map_example;
 ## Calculate the solutions
 ## 
 solns = lapply(as.list(1:N_fns), function(i) { solve_dp(pp_list[[i]], ac_map = ac_map, holding_cost_fn = hf_list[[i]])});
+save(pp_list, ac_map, hf_list, solns, file="FnVariety.Robj");
+
+##
+## Extract the optimal average costs from this list
+unlist(lapply(solns, function(x) { x$optAvgCost}));
 
 ######################################################################
 ##
@@ -76,3 +81,8 @@ for(i in 1:nrow(x)) {
 
 ## Get the solutions over all of these functions
 solns2 = lapply(as.list(1:nrow(x)), function(i) { solve_dp(pp_list_2[[i]], ac_map = ac_map, holding_cost_fn = hfn_list_2[[i]])});
+
+## Save the unique determinants of these functions and we can plot them later
+save(pp_list_2, ac_map, hfn_list_2, solns2, file="VaryQuadraticFunctions.Robj");
+
+unlist(lapply(solns2, function(x) { x$optAvgCost}));
