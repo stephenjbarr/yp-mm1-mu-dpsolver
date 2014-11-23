@@ -49,12 +49,61 @@ make_act_and_costact <- function(cas) {
 #######################################################################
 ##
 ## ac_map_example
+##
+## The ac_map requires 2 parallel arrays called act and costact
+## act is the set of possible actions, and costact is the set of
+## possible states
 ac_map_example <- list(act     =  c(1,4,7),
                        costact = c(1,50,500)
                        )
 
 
-solve_dp <-  function(problem_params, ca_struct = NULL, ac_map = NULL) {
+######################################################################
+##
+## solve_dp
+##
+## Requires
+##   1. A problem_params list with the following defined:
+##      N_state_size       = 48,  ## Max Queue Size
+##      N_action_size      = 3,
+##      service_rate       = 2.0,
+##      holding_cost_rate  = 1.0,
+##      epsilon            = 0.0001,
+##      MAXITER            = 20000,
+##      output_base        = "sample_output"
+##
+##      holding_cost_rate can be NULL if holding_cost_fn is specified.
+##
+##   2. One of ca_struct OR ac_map.
+##
+##      ca stands for cost,action.
+##      cmu is a function which returns, for a specified service rate,
+##      the corresponding cost. It also asks for mu_min and mu_max, the lower
+##      and upper bounds of the service rate, and NUMACT, the number of points
+##      between the min and the max.
+##      
+##          cmu                = function(x) { x^2 },  # cost fn
+##          mu_min             = 1.0,
+##          mu_max             = 7.0,
+##          NUMACT             = 10)
+##
+##      
+##      ac_map is a list with the elements act and costact, which both have the
+##      same length. ac_map$act defines the set of mus, and ac_map$costact defines
+##      the corresponding costs.
+##  
+## OPTIONAL:
+##  3.  holding_cost_fn
+##         This is a function of the queue length and determines the holding cost.
+##         This is an alternative to specifying the holding_cost_rate. If for some
+##         reason both are specified, holding_cost_fn takes precedence
+## 
+
+solve_dp <-  function(
+    problem_params,
+    ca_struct = NULL,
+    ac_map = NULL,
+    holding_cost_fn = NULL) {
 
     ## Problem_Params and one of ca_struct, ac_map is needed
     if(missing(problem_params)) {
@@ -66,6 +115,21 @@ solve_dp <-  function(problem_params, ca_struct = NULL, ac_map = NULL) {
         stop("Must supply action space and costs, either explictly using an ac_map or supply a function.");
     }
 
+    
+    ## Check if we can specify the holding cost function
+    if( is.null(problem_params$holding_cost_rate) && is.null(holding_cost_fn) ) {
+        stop("Must specify either holding cost rate or holding cost function");
+    }
+
+    ## Extract the holding cost function
+    ##
+    if( is.null(holding_cost_fn) ) {
+        hq <- function(q) { q * problem_params$holding_cost_rate; }
+    } else {
+        hq <- holding_cost_fn;
+    }
+
+    
     ######################################################################
     ## Extract the problem parameters
     N       <-     problem_params$N_state_size;       
@@ -74,7 +138,7 @@ solve_dp <-  function(problem_params, ca_struct = NULL, ac_map = NULL) {
     H       <-     problem_params$holding_cost_rate;  
     epsilon <-     problem_params$epsilon;
     MAXITER <-     problem_params$MAXITER;
-
+    fname_base <-  problem_params$output_base;
 
     #####################################################
     ## Matrix to hold the actions and correspnding costs
@@ -93,45 +157,6 @@ solve_dp <-  function(problem_params, ca_struct = NULL, ac_map = NULL) {
     TAct <- tau * act;     ## FillTAct equivalent
     arr  <- tau * lambda;
 
-
-
-
-    ## CreateWFun
-    ##   This populates the WFun and OptAct arrays,
-    ##   It depends on Fun, arr, H, CostAct, TAct
-    ##
-    ##   OptAct, the optimal policy, gets recomputed every time
-    ##
-    ##  Note, this is created within the scope of solve_dp.
-    ##  Such is the curse with mutable state.
-
-
-    ## createWFun <- function(FunPrev) {
-
-    ##     WFun       =  matrix(data=0, nrow=1, ncol=(N+1))
-    ##     OptAct     =  matrix(data=0, nrow=1, ncol=(N))
-    ##     OptActIdx  =  matrix(data=0, nrow=1, ncol=(N))        
-    ##     WFun[1]    =  (1 - arr) * FunPrev[1] + arr * FunPrev[2];
-    ##     New        =  0.0
-
-    ##     for (i in 2:(N+1)) {
-    ##         if(i < N) {
-    ##             New = FunPrev[i+2];  ## Adding + 2 to compensate for the 1-based indexing
-    ##         } else {
-    ##             New = FunPrev[N+1]; 
-    ##         }
-    ##         action_costs = CostAct + TAct * FunPrev[i - 1] + (1 - arr - TAct) * FunPrev[i];
-    ##         WFun[i]        = H * i + arr * New + (min(action_costs));
-    ##         oai            = which.min(action_costs)
-    ##         OptAct[i-1]    = TAct[oai];
-    ##         OptActIdx[i-1] = oai
-    ##     }
-
-    ##     return(list(wf = WFun, oa = OptAct, oai = OptActIdx))
-
-    ## }
-
-
     ## Initial setup for the iteration
     Old     = 1;
     delta   = 1;
@@ -149,11 +174,7 @@ solve_dp <-  function(problem_params, ca_struct = NULL, ac_map = NULL) {
     OptActIdx   = matrix(data=0, nrow=1, ncol=N)
 
     while ((delta > epsilon) && (iter < MAXITER)) {
-        ## x      = createWFun(Fun)       ## For this function, Fun is read-only
-        ## WFun   = x$wf
-        ## OptAct = x$oa
-        ## OptActIdx = x$oai
-
+ 
         ## Put the createWFun function body here       
         WFun[1]    =  (1 - arr) * Fun[1] + arr * Fun[2];
         New        =  0.0
@@ -165,7 +186,8 @@ solve_dp <-  function(problem_params, ca_struct = NULL, ac_map = NULL) {
                 New = Fun[N+1]; 
             }
             action_costs = CostAct + TAct * Fun[i - 1] + (1 - arr - TAct) * Fun[i];
-            WFun[i]        = H * (i-1) + arr * New + (min(action_costs));
+            ## WFun[i]        = H * (i-1) + arr * New + (min(action_costs));
+            WFun[i]        = hq(i-1) + arr * New + (min(action_costs));
             oai            = which.min(action_costs)
             OptAct[i-1]    = TAct[oai];
             OptActIdx[i-1] = oai
@@ -173,12 +195,12 @@ solve_dp <-  function(problem_params, ca_struct = NULL, ac_map = NULL) {
 
 
 
-        delta  = abs(WFun[1] - Old)
-        Old    = WFun[1]
+        delta  = abs(WFun[1] - Old);
+        Old    = WFun[1];
 
         ## UpdateFun
         Fun[1]       =  0;
-        Fun[2:(N+1)] = WFun[2:(N+1)] - WFun[1];   ## This fun is scoped above, so 
+        Fun[2:(N+1)] = WFun[2:(N+1)] - WFun[1];
         iter         =  iter + 1;
         print(paste("Iter: ", iter, ", ERR: ", delta));
 
@@ -193,6 +215,7 @@ solve_dp <-  function(problem_params, ca_struct = NULL, ac_map = NULL) {
         NIter      = iter
                  )
 
+    save(soln, file = paste(fname_base, ".Robj", sep=""));
     return(soln)
 
 }
