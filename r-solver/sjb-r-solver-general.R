@@ -6,7 +6,7 @@
 problem_params_example <- list(
     N_state_size       = 48,  ## Max Queue Size
     N_action_size      = 3,
-    service_rate       = 2.0,
+    arrival_rate       = 2.0,
     holding_cost_rate  = 1.0,
     epsilon            = 0.0001,
     MAXITER            = 20000,
@@ -134,7 +134,7 @@ solve_dp <-  function(
     ## Extract the problem parameters
     N       <-     problem_params$N_state_size;       
     NUMACT  <-     problem_params$N_action_size;      ## this seems wrong here
-    lambda  <-     problem_params$service_rate;       
+    lambda  <-     problem_params$arrival_rate;       
     H       <-     problem_params$holding_cost_rate;  
     epsilon <-     problem_params$epsilon;
     MAXITER <-     problem_params$MAXITER;
