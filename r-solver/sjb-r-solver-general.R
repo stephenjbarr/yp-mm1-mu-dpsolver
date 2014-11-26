@@ -39,7 +39,7 @@ ca_struct_example <- list(cmu    = function(x) { x^2 },  # cost fn
 ## suggested points
 ##  
 make_act_and_costact <- function(cas) {
-    pts   <- seq(from=cas$mu_min, to=cas$mu_max, length.out=cas$NUMACT)
+    pts   <- matrix(seq(from=cas$mu_min, to=cas$mu_max, length.out=cas$NUMACT),nrow=1)
     costs <- matrix(cas$cmu(pts),nrow=1)
     aac   <- list(act = pts, costact = costs)
     return(aac)
@@ -143,17 +143,17 @@ solve_dp <-  function(
     #####################################################
     ## Matrix to hold the actions and correspnding costs
     ## We get this either through a ca_struct or an ac_map
-    ac <- list()    
     if(is.null(ac_map)) {
         ac  <- make_act_and_costact(ca_struct)
     } else {
         ac <- ac_map
     }
+
     act     <- ac$act
     CostAct <- ac$costact
 
     ## Calculate tau, and multiply the action space by this to create TAct
-    tau  <- 0.5 * (1 / (lambda + act[length(act)]));
+    tau  <- 0.5 * (1 / (lambda + max(act)))
     TAct <- tau * act;     ## FillTAct equivalent
     arr  <- tau * lambda;
 
@@ -168,7 +168,8 @@ solve_dp <-  function(
     ## Be aware when comparing with reference Problem7.p
     Fun         = matrix(data=0, nrow=1, ncol=(N+1))
     WFun        = matrix(data=0, nrow=1, ncol=(N+1))
-    
+    WFun.prev   = matrix(data=100, nrow=1, ncol=(N+1))
+
     ## Indexed 1 .. N
     OptAct      = matrix(data=0, nrow=1, ncol=N)
     OptActIdx   = matrix(data=0, nrow=1, ncol=N)
@@ -185,18 +186,21 @@ solve_dp <-  function(
             } else {
                 New = Fun[N+1]; 
             }
+
             action_costs = CostAct + TAct * Fun[i - 1] + (1 - arr - TAct) * Fun[i];
             ## WFun[i]        = H * (i-1) + arr * New + (min(action_costs));
             WFun[i]        = hq(i-1) + arr * New + (min(action_costs));
             oai            = which.min(action_costs)
-            OptAct[i-1]    = TAct[oai];
+##            OptAct[i-1]    = TAct[oai];
+            OptAct[i-1]    = act[oai];
             OptActIdx[i-1] = oai
         }
 
 
 
-        delta  = abs(WFun[1] - Old);
-        Old    = WFun[1];
+        
+        delta  = max(abs(WFun - WFun.prev));
+        WFun.prev = WFun;
 
         ## UpdateFun
         Fun[1]       =  0;

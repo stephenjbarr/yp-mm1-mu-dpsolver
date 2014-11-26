@@ -6,6 +6,10 @@
 
 
 * Optimal Service Rates in M/M/1 Queue
+  :PROPERTIES:
+  :EXPORT_FILE_NAME: extra_doc/readme-export/readme-export.pdf
+  :EXPORT_TITLE: Optimal Service Rates in M/M/1 Queue
+  :END:
 
 
 ** Project Formulation
@@ -40,14 +44,114 @@
 
 
 *** Algorithm / Pseudocode
-    1. Choose \( N \), division
-    2. Set:
-       1. \( W_{\text{prev}} = 1\)
-       2. \( \tau = 1/ (2(\lambda + \bar{\mu})) \)
-       3. \( \text{arr} = \lambda \tau \)
-       4. \( V_{\text{prev}} = 1  \)
-    3. While \( \{\delta > \epsilon\} \land \{ I < \text{MaxIter}\} \)
-       1. 
+
+
+**** Sennot's VIA algorithm 6.6.4
+     1. Let \( x \) be a "distinguished state" and \( \epsilon > 0 \), small.
+     2. Set \( N = 0 \), \( u_{0} \equiv 0 \)
+     3. Set \( w_{n}(i) = \min_{a}\{C(i,a)\} + \sum_{j} P_{ij}(a) u_{n}(j) \)
+     4. If \( n = 0 \), set \( \delta = 1 \).
+	If \( n \geq 1 \), set \( \sigma = |w_{n}(x) - w_{n-1}(x)| \).
+	If \( \delta < \epsilon \), =STOP=. Go to final step.
+     5. Set \( u_{n+1}(i) = w_{n}(i) - w_{n}(x) \).
+     6. Go to step 2 and and \( n := n + 1 \).
+     7. Print \( w_{n}(x) \) and a stationalry policy realizing
+	\( \min_{a} \{C(i,a) + \sum_{j} P_{ij}(a) u_{n}(j)\} \).
+
+
+**** Application of algorithm in R code
+
+     
+     For the formulation in cite:sennott_stochastic_1998 10.4, the expressions for the value function iteration are given as
+     1. \( w_{n}(0) = (1 - \tau \lambda) u_{n}(0)  + \tau \lambda u_{n}(1) \).
+     2. \( w_{n}(i) = H i + \min_{a} \{c(a) + \tau a u_{n}(i-1) + [1 - \tau(\lambda + a)] u_{n}(i) + \tau \lambda u_{n}(i+1)   \} , 1 \leq i \leq N-1\)
+     3. \( w_{n}(N) = H N + \min_{a} \{c(a) + \tau a u_{n}(N-1) + (1 - \tau a) u_{n}(N)\} \),
+     4. \( u_{n+1} = w_{n}(i) - w_{n}(0) , 0 \leq i \leq N\).
+
+
+     The function signature of =solve_dp= is the following:
+
+
+#+CAPTION: Function Signature for solve_dp label:code-fn-sig
+#+begin_src R
+solve_dp <-  function(
+    problem_params,
+    ca_struct = NULL,
+    ac_map = NULL,
+    holding_cost_fn = NULL) 
+#+END_SRC
+
+
+     1. =problem_params= object is required and must be the first argument.
+     2. Specifying the action state can be done in one of two ways:
+	1. =ca_struct= means *Cost Action* structure.
+	2. =ac_map= means *Action Cost* map.
+     3. Specifying the holding cost can be done in =problem_params$holding_cost_rate= or by specifying a =holding_cost_fn= in the optional arguments.
+
+
+     # 1. Choose \( N \), division
+     # 2. Set:
+     # 	1. \( W_{\text{prev}} = 1\)
+     # 	2. \( \tau = 1/ (2(\lambda + \bar{\mu})) \)
+     # 	3. \( \text{arr} = \lambda \tau \)
+     # 	4. \( V_{\text{prev}} = 1  \)
+     # 3. =Old= = 1, \( \delta = 1 \), 
+     # 4. While \( \{\delta > \epsilon\} \land \{\text{iter} < \text{MaxIter}\} \)
+
+     
+#+CAPTION: Main Loop for Code_dp label:main-loop
+#+begin_src R
+
+    ## Calculate tau, and multiply the action space by this to create TAct
+    tau  <- 0.5 * (1 / (lambda + max(act)))
+    TAct <- tau * act;
+    arr  <- tau * lambda;
+
+    ## Initial setup for the iteration
+    Old     = 1;
+    delta   = 1;
+    iter    = 1;
+
+
+    ## Fill the u matrix (Fun) with zeros ## InitialFun
+    ## These are indexed as 1..N+1, rather than 0..N.
+    ## Be aware when comparing with reference Problem7.p
+    Fun         = matrix(data=0, nrow=1, ncol=(N+1))
+    WFun        = matrix(data=0, nrow=1, ncol=(N+1))
+    
+    ## Indexed 1 .. N
+    OptAct      = matrix(data=0, nrow=1, ncol=N)
+    OptActIdx   = matrix(data=0, nrow=1, ncol=N)
+
+    while ((delta > epsilon) && (iter < MAXITER)) {
+ 
+        WFun[1]    =  (1 - arr) * Fun[1] + arr * Fun[2];
+        New        =  0.0
+
+        for (i in 2:(N+1)) {
+            if(i < (N+1)) {
+                New = Fun[i+1];  ## 
+            } else {
+                New = Fun[N+1]; 
+            }
+            action_costs = CostAct + TAct * Fun[i - 1] 
+                           + (1 - arr - TAct) * Fun[i];
+            WFun[i]        = hq(i-1) + arr * New + (min(action_costs));
+            oai            = which.min(action_costs)
+            OptAct[i-1]    = TAct[oai];
+            OptActIdx[i-1] = oai
+        }
+
+        delta  = abs(WFun[1] - Old);
+        Old    = WFun[1];
+
+        ## UpdateFun
+        Fun[1]       =  0;
+        Fun[2:(N+1)] = WFun[2:(N+1)] - WFun[1];
+        iter         =  iter + 1;
+        print(paste("Iter: ", iter, ", ERR: ", delta));
+    }
+#+end_src	
 
 
 
