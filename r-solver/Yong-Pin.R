@@ -3,18 +3,20 @@ source("sjb-r-solver-general.R");
 source("dp-plotter.R");    ## New plotting code
 
 my_problem_params <- list(
-  N_state_size       = 8000,  ## Max Queue Size
+  N_state_size       = 100,  ## Max Queue Size
   N_action_size      = 3, ## just ignore this
   arrival_rate       = 2.0,
   holding_cost_rate  = 1.0, ## default, just ignore this
   epsilon            = 0.0001,
-  MAXITER            = 20000,
+  MAXITER            = 200000,
   output_base        = "yp-example-problem" ## file prefix
 )
 
 ## hf_rate     = function(q) { 0.3 * q };
 
-hf_step = stepfun(x=c(5,10,15,20), y=c(1,3,4,5,8));
+## hf_step = stepfun(x=c(5,10,15,20), y=c(1,3,4,5,8));
+
+hf_step = function(q) { 0.01 * q };
 
 ## hf_penalty = function(q) {
 ## cost = 10 * q;
@@ -24,8 +26,8 @@ hf_step = stepfun(x=c(5,10,15,20), y=c(1,3,4,5,8));
 ## return(cost);
 ## }
 
-my_ca_struct <- list(cmu    = function(x) { 1.5*x^2 },  # cost fn
-                     mu_min = 0.01,
+my_ca_struct <- list(cmu    = function(x) { 20*x },  # cost fn
+                     mu_min = 2,
                      mu_max = 100,
                      NUMACT = 1000);
 
